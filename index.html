@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bakso App</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- Tailwind via CDN (cukup untuk preview cepat) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --gradient-brand: linear-gradient(90deg,#ea580c,#dc2626,#db2777);
+      }
+      html { scroll-behavior: smooth; }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+      ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+      .glass { background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); }
+      
+        /* Animated gradient background layer */
+        .animated-gradient-bg { 
+          position: fixed; inset:0; z-index:-30; 
+          background: linear-gradient(-45deg,#fff7ed,#fff1f2,#fefce8,#fffbeb); 
+          background-size: 400% 400%; animation: gradientShift 25s ease infinite; 
+        }
+        @keyframes gradientShift { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
+
+        /* Animated border glow for product cards */
+        .animated-card { position:relative; overflow:hidden; }
+        .animated-card:before {
+          content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
+          background:linear-gradient(130deg,rgba(255,138,76,.6),rgba(255,64,128,.45),rgba(255,221,0,.35));
+          -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+          -webkit-mask-composite:xor; mask-composite:exclude; opacity:.55; filter:blur(0px);
+          animation:borderPulse 5s linear infinite; pointer-events:none;
+        }
+        @keyframes borderPulse { 0% {opacity:.35; filter:blur(0px);} 50% {opacity:.9; filter:blur(2px);} 100% {opacity:.35; filter:blur(0px);} }
+
+        /* Blob animation */
+        @keyframes blobMove {
+          0%,100% { transform: translate(0px,0px) scale(1); }
+          33% { transform: translate(40px,-30px) scale(1.1); }
+          66% { transform: translate(-30px,25px) scale(0.9); }
+        }
+        .animate-blob { animation: blobMove 22s linear infinite; filter: blur(40px); opacity: .55; }
+
+        /* Slow pulse headline */
+        @keyframes pulseSlow { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.08); } }
+        .animate-pulse-slow { animation: pulseSlow 5.5s ease-in-out infinite; }
+
+    </style>
+  </head>
+  <body class="bg-gray-50 transition-colors">
+    <div id="root"></div>
+    <script type="module" src="/main.jsx"></script>
+  </body>
+</html>
