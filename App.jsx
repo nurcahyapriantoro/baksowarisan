@@ -87,13 +87,15 @@ export default function BaksoFinanceApp() {
     (async () => {
       try {
         const prodPayload = { name: newProd.name, hpp: parseInt(newProd.hpp) || 0, price: parseInt(newProd.price) || 0, stock: parseInt(newProd.stock) || 0 };
+        console.log('Creating product', prodPayload);
         const created = await createProductDB(prodPayload, newProdImages[0]);
         setProducts(prev => [created, ...prev]);
         setNewProd({ name: '', hpp: '', price: '', stock: '' });
         setNewProdImages([]);
       } catch (err) {
         console.error('Create product failed', err);
-        alert('Gagal menambahkan produk. Cek console.');
+        const message = err?.message || JSON.stringify(err);
+        alert('Gagal menambahkan produk: ' + message + '\nLihat console/network untuk detail.');
       }
     })();
   };
