@@ -1,10 +1,11 @@
 // Renamed from index.js to App.jsx to ensure JSX parsing under Vite/React
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { MultiLayerBackground } from './components/MultiLayerBackground';
 import { BaksoBackground } from './components/BaksoBackground';
 import { useStickyState } from './hooks/useStickyState';
+import { fetchProductsFromDB, createProductDB, updateProductDB, deleteProductDB } from './utils/supabaseProducts';
 import { LandingPage } from './components/LandingPage';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminHeader } from './components/AdminHeader';
@@ -82,23 +83,62 @@ export default function BaksoFinanceApp() {
   };
   const addProduct = () => {
     if (!newProd.name) return;
-    setProducts([
-      ...products,
-      {
-        id: Date.now(),
-        name: newProd.name,
-        hpp: parseInt(newProd.hpp) || 0,
-        price: parseInt(newProd.price) || 0,
-        stock: parseInt(newProd.stock) || 0,
-        images: newProdImages,
-        rating: 5
+    // create in supabase and update local state
+    (async () => {
+      try {
+        const prodPayload = { name: newProd.name, hpp: parseInt(newProd.hpp) || 0, price: parseInt(newProd.price) || 0, stock: parseInt(newProd.stock) || 0 };
+        const created = await createProductDB(prodPayload, newProdImages[0]);
+        setProducts(prev => [created, ...prev]);
+        setNewProd({ name: '', hpp: '', price: '', stock: '' });
+        setNewProdImages([]);
+      } catch (err) {
+        console.error('Create product failed', err);
+        alert('Gagal menambahkan produk. Cek console.');
       }
-    ]);
-    setNewProd({ name: '', hpp: '', price: '', stock: '' });
-    setNewProdImages([]);
+    })();
   };
-  const deleteProduct = id => { if (confirm('Hapus produk ini?')) setProducts(products.filter(p => p.id !== id)); };
-  const updateStock = (id, amount) => setProducts(products.map(p => p.id === id ? { ...p, stock: p.stock + amount } : p));
+  const deleteProduct = id => {
+    if (!confirm('Hapus produk ini?')) return;
+    (async () => {
+      try {
+        // if id looks like uuid, attempt delete in DB
+        if (typeof id === 'string' && id.includes('-')) await deleteProductDB(id);
+      } catch (err) {
+        console.error('Delete product failed', err);
+        alert('Gagal menghapus di server, masih dihapus lokal');
+      }
+      setProducts(prev => prev.filter(p => p.id !== id));
+    })();
+  };
+
+  const updateStock = (id, amount) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: p.stock + amount } : p));
+    // try to persist to DB if product exists there (uuid)
+    (async () => {
+      try {
+        const prod = products.find(p => p.id === id);
+        if (!prod) return;
+        const newStock = prod.stock + amount;
+        if (typeof id === 'string' && id.includes('-')) {
+          await updateProductDB(id, { stock: newStock });
+        }
+      } catch (err) {
+        console.error('Update stock failed', err);
+      }
+    })();
+  };
+
+  // Fetch products from Supabase on mount and replace local products if available
+  useEffect(() => {
+    (async () => {
+      try {
+        const remote = await fetchProductsFromDB();
+        if (Array.isArray(remote) && remote.length > 0) setProducts(remote);
+      } catch (err) {
+        console.warn('Could not fetch remote products', err);
+      }
+    })();
+  }, []);
   const addTransaksi = () => {
     if (!orderForm.customer || !orderForm.productId) { alert('Lengkapi data'); return; }
     const product = products.find(p => p.id === parseInt(orderForm.productId));
